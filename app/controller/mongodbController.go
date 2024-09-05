@@ -318,20 +318,199 @@ func (t *MongodbController) UpdateById(c *gin.Context) {
 	return
 }
 
+// UpdateOne 更新一条数据
+func (t *MongodbController) UpdateOne(c *gin.Context) {
+	var params struct {
+		Database   string      `json:"database"`
+		Collection string      `json:"collection"`
+		Filter     interface{} `json:"filter"`
+		Update     bson.M      `json:"update"`
+		Options    interface{} `json:"options"`
+	}
+	err := json.NewDecoder(c.Request.Body).Decode(&params)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "参数校验失败！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	filter, err := CheckFilterData(params.Filter)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	// 选择数据库和集合
+	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
+
+	result, err := collection.UpdateOne(context.TODO(), filter, bson.M{"$set": params.Update})
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 423,
+			Msg:  "修改失败！" + err.Error(),
+			Data: nil,
+		})
+	}
+	c.JSON(http.StatusOK, Message{
+		Code: 0,
+		Msg:  "ok",
+		Data: result,
+	})
+	return
+}
+
+func (t *MongodbController) UpdateMany(c *gin.Context) {
+	var params struct {
+		Database   string      `json:"database"`
+		Collection string      `json:"collection"`
+		Filter     interface{} `json:"filter"`
+		Update     bson.M      `json:"update"`
+		Options    interface{} `json:"options"`
+	}
+	err := json.NewDecoder(c.Request.Body).Decode(&params)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "参数校验失败！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	filter, err := CheckFilterData(params.Filter)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	// 选择数据库和集合
+	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
+	result, err := collection.UpdateMany(context.TODO(), filter, bson.M{"$set": params.Update})
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 423,
+			Msg:  "修改失败！" + err.Error(),
+			Data: nil,
+		})
+	}
+	c.JSON(http.StatusOK, Message{
+		Code: 0,
+		Msg:  "ok",
+		Data: result,
+	})
+	return
+}
+
+func (t *MongodbController) DeleteById(c *gin.Context) {
+	var params struct {
+		Database   string      `json:"database"`
+		Collection string      `json:"collection"`
+		ID         string      `json:"id"`
+		Options    interface{} `json:"options"`
+	}
+	err := json.NewDecoder(c.Request.Body).Decode(&params)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "参数校验失败！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	// Convert ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(params.ID)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "ID格式错误！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	// 选择数据库和集合
+	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
+
+	result, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objectID})
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 423,
+			Msg:  "修改失败！" + err.Error(),
+			Data: nil,
+		})
+	}
+	c.JSON(http.StatusOK, Message{
+		Code: 0,
+		Msg:  "ok",
+		Data: result,
+	})
+	return
+}
+
+func (t *MongodbController) DeleteMany(c *gin.Context) {
+	var params struct {
+		Database   string      `json:"database"`
+		Collection string      `json:"collection"`
+		Filter     interface{} `json:"filter"`
+		Options    interface{} `json:"options"`
+	}
+	err := json.NewDecoder(c.Request.Body).Decode(&params)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "参数校验失败！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	filter, err := CheckFilterData(params.Filter)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	// 选择数据库和集合
+	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
+	result, err := collection.DeleteMany(context.TODO(), filter)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 423,
+			Msg:  "修改失败！" + err.Error(),
+			Data: nil,
+		})
+	}
+	c.JSON(http.StatusOK, Message{
+		Code: 0,
+		Msg:  "ok",
+		Data: result,
+	})
+	return
+}
+
 func CheckFilterData(data any) (bson.M, error) {
-	filterBSON, ok := data.(map[string]interface{})
-	if !ok {
-		return nil, errors.New("过滤条件格式错误")
+	switch v := data.(type) {
+	case map[string]interface{}:
+		filter := bson.M{}
+		for key, value := range v {
+			filter[key] = value
+		}
+		return filter, nil
+	default:
+		return nil, errors.New("不支持的过滤条件格式")
 	}
-	filter := bson.M{}
-	for key, value := range filterBSON {
-		filter[key] = value
-	}
-	return filter, nil
 }
 
 // Helper function to convert interface{} to bson.M
-func toBSON(data interface{}) (bson.M, error) {
+func dataToBSON(data interface{}) (bson.M, error) {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		filter := bson.M{}

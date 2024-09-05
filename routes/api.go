@@ -33,6 +33,9 @@ func (apiRouter *apiRouter) InitRouter() {
 			mongodb.POST("installMany", controller.Mongodb.InsertMany)
 			mongodb.POST("installOne", controller.Mongodb.InsertOne)
 			mongodb.POST("updateById", controller.Mongodb.UpdateById)
+			mongodb.POST("updateOne", controller.Mongodb.UpdateOne)
+			mongodb.POST("deleteById", controller.Mongodb.DeleteById)
+			mongodb.POST("deleteMany", controller.Mongodb.DeleteMany)
 		}
 	}
 
