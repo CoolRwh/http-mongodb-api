@@ -276,9 +276,9 @@ func (t *MongodbController) InsertMany(c *gin.Context) {
 
 func (t *MongodbController) InsertOne(c *gin.Context) {
 	var params struct {
-		Database   string `json:"database"`
-		Collection string `json:"collection"`
-		Data       any
+		Database   string      `json:"database"`
+		Collection string      `json:"collection"`
+		Data       interface{} `json:"data"`
 	}
 	err := json.NewDecoder(c.Request.Body).Decode(&params)
 	if err != nil {
@@ -289,8 +289,20 @@ func (t *MongodbController) InsertOne(c *gin.Context) {
 		})
 		return
 	}
+	var doc bson.M
+	switch v := params.Data.(type) {
+	case map[string]interface{}:
+		doc = bson.M(v)
+	default:
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "数据格式错误！",
+			Data: nil,
+		})
+		return
+	}
 	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
-	oneResult, err := collection.InsertOne(context.TODO(), params.Data)
+	result, err := collection.InsertOne(context.TODO(), doc)
 	if err != nil {
 		c.JSON(http.StatusOK, Message{
 			Code: 423,
@@ -301,7 +313,7 @@ func (t *MongodbController) InsertOne(c *gin.Context) {
 	c.JSON(http.StatusOK, Message{
 		Code: 0,
 		Msg:  "ok",
-		Data: oneResult.InsertedID,
+		Data: result,
 	})
 	return
 }
