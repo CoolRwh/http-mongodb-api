@@ -32,6 +32,7 @@ func (apiRouter *apiRouter) InitRouter() {
 			mongodb.POST("fineOne", controller.Mongodb.FindOne)
 			mongodb.POST("installMany", controller.Mongodb.InsertMany)
 			mongodb.POST("installOne", controller.Mongodb.InsertOne)
+			mongodb.POST("updateById", controller.Mongodb.UpdateById)
 		}
 	}
 

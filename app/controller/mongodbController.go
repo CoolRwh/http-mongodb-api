@@ -70,54 +70,6 @@ func (t *MongodbController) Cs(c *gin.Context) {
 	return
 }
 
-// UpdateById 根据ID修改资料
-func (t *MongodbController) UpdateById(c *gin.Context) {
-	var params struct {
-		Database   string `json:"database"`
-		Collection string `json:"collection"`
-		ID         string `json:"id"`
-		Update     bson.M `json:"update"`
-		Options    any    `json:"options"`
-	}
-	err := json.NewDecoder(c.Request.Body).Decode(&params)
-	if err != nil {
-		c.JSON(http.StatusOK, Message{
-			Code: 422,
-			Msg:  "参数校验失败！" + err.Error(),
-			Data: nil,
-		})
-		return
-	}
-
-	// 选择数据库和集合
-	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
-	// Convert ID to ObjectID
-	objectID, err := primitive.ObjectIDFromHex(params.ID)
-	if err != nil {
-		c.JSON(http.StatusOK, Message{
-			Code: 422,
-			Msg:  "ID格式错误！" + err.Error(),
-			Data: nil,
-		})
-		return
-	}
-
-	result, err := collection.UpdateOne(context.TODO(), bson.D{{"_id", objectID}}, bson.M{"$set": params.Update})
-	if err != nil {
-		c.JSON(http.StatusOK, Message{
-			Code: 423,
-			Msg:  "修改失败！" + err.Error(),
-			Data: nil,
-		})
-	}
-	c.JSON(http.StatusOK, Message{
-		Code: 0,
-		Msg:  "ok",
-		Data: result,
-	})
-	return
-}
-
 func (t *MongodbController) Find(c *gin.Context) {
 	var params struct {
 		Database   string      `json:"database"`
@@ -307,6 +259,54 @@ func (t *MongodbController) InsertOne(c *gin.Context) {
 		c.JSON(http.StatusOK, Message{
 			Code: 423,
 			Msg:  "添加失败！" + err.Error(),
+			Data: nil,
+		})
+	}
+	c.JSON(http.StatusOK, Message{
+		Code: 0,
+		Msg:  "ok",
+		Data: result,
+	})
+	return
+}
+
+// UpdateById 根据ID修改资料
+func (t *MongodbController) UpdateById(c *gin.Context) {
+	var params struct {
+		Database   string      `json:"database"`
+		Collection string      `json:"collection"`
+		ID         string      `json:"id"`
+		Update     bson.M      `json:"update"`
+		Options    interface{} `json:"options"`
+	}
+	err := json.NewDecoder(c.Request.Body).Decode(&params)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "参数校验失败！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+
+	// 选择数据库和集合
+	collection := db.MongoDbClient.Database(params.Database).Collection(params.Collection)
+	// Convert ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(params.ID)
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 422,
+			Msg:  "ID格式错误！" + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+
+	result, err := collection.UpdateOne(context.TODO(), bson.D{{"_id", objectID}}, bson.M{"$set": params.Update})
+	if err != nil {
+		c.JSON(http.StatusOK, Message{
+			Code: 423,
+			Msg:  "修改失败！" + err.Error(),
 			Data: nil,
 		})
 	}
