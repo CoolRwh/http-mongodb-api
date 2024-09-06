@@ -1,0 +1,6 @@
+server:
+  addr: ":8089"
+mongodb:
+  url: "mongodb://root:root@192.168.56.56:27017"
+  minPoolSize: 10
+  maxPoolSize: 100

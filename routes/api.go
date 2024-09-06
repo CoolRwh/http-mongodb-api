@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"http-mongodb-api/app/controller"
 	"net/http"
 )
@@ -38,8 +39,7 @@ func (apiRouter *apiRouter) InitRouter() {
 			mongodb.POST("deleteMany", controller.Mongodb.DeleteMany)
 		}
 	}
-
-	if err := Router.Run(":8080"); err != nil {
+	if err := Router.Run(viper.GetString("server.addr")); err != nil {
 		fmt.Printf("error:" + err.Error())
 	}
 }
