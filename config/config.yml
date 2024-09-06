@@ -1,5 +1,5 @@
 server:
-  addr: ":8089"
+  addr: ":8080"
 mongodb:
   url: "mongodb://root:root@192.168.56.56:27017"
   minPoolSize: 10
